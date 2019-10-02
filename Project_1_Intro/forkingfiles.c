@@ -20,39 +20,47 @@ void print_string_to_file(const char* thing_to_print);
 
 // MAIN *********************************************************************************************
 
+
 int main() {
-    printf("TEST");
-    pid_t pid, wpid;
+    pid_t pid;
 	
-    printf("before fork");
+    printf("before fork\n");
 
 	pid = fork();
 
-    // Both processes use the same xx variable (points to the same location), so xx holds the value of whoever modified it last
+    char* writeString = malloc(32 * sizeof(char));
+    memset(writeString, '\0', 32 * sizeof(char));
+
+    // Processes will set writeString to different values, then send it all to the file to be written
 
 	if (pid == 0) {
 		// Child process
-        char child[50] = "child";
-        printf("child");
-        print_string_to_file(child);
-
-		exit(1);
+        sprintf(writeString, "child");
 	} else if (pid < 0) {
 		// We forked it up
 		perror("error on forking");
 		exit(1);
 	} else {
-		// Parent process
-        char parent[50] = "parent";
-        printf("parent");
-        print_string_to_file(parent);
-        
-        exit(1);
+        sprintf(writeString, "parent");
 	}	
+    
+    printf("%s\n", writeString);
+
+    // Both child and parent will write to the file 10 times
+    // Since it happens concurrently, the order that they happen in is not guaranteed
+    // They kind of alternate, but sometimes one will jump ahead; 
+    // It depends on how the OS decides to allocate time for them
+
+    int i;
+    for (i = 0; i < 10; i++) {
+        print_string_to_file(writeString);
+    }
+
+    exit(1);
 }
 
 void print_string_to_file(const char* thing_to_print) {
-    FILE* fp = fopen ("JUNK.txt", "r");
-    fprintf(fp, thing_to_print);
+    FILE * fp = fopen ("JUNK.txt", "a");
+    fprintf(fp, "%s\n", thing_to_print);
     fclose(fp);
 }

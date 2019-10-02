@@ -19,7 +19,7 @@
 // MAIN *********************************************************************************************
 
 int main() {
-    pid_t pid, wpid;
+    pid_t pid;
 	
     int xx = 100;
     printf("Prior to forking, xx is %d\n", xx);
