@@ -305,8 +305,8 @@ run_tests(void)
         assert(ptr3 < ptr4);
         assert(ptr4 < ptr5);
 
-        //fprintf(stderr, "  ptr1 : %p\n  ptr2 : %p\n  ptr3 : %p\n  ptr4 : %p\n  ptr5 : %p\n"
-        //       , ptr1, ptr2, ptr3, ptr4, ptr5);
+        fprintf(stderr, "  ptr1 : %p\n  ptr2 : %p\n  ptr3 : %p\n  ptr4 : %p\n  ptr5 : %p\n"
+              , ptr1, ptr2, ptr3, ptr4, ptr5);
 
         beavalloc_dump(FALSE);
 
@@ -652,7 +652,10 @@ run_tests(void)
         assert(memcmp(ptrs, ptr1, 5 * sizeof(char *)) == 0);
         beavalloc_dump(FALSE);
 
+        printf("ptrs: %p\tptr1: %p\n", ptrs, ptr1);
         ptr1 = beavrealloc(ptr1, 2000 * (sizeof(char *)));
+        printf("ptrs: %p\tptr1: %p\n", ptrs, ptr1);
+        beavalloc_dump(FALSE);
         assert(memcmp(ptrs, ptr1, 5 * sizeof(char *)) == 0);
 
         for (i = 5; i < 10; i++) {

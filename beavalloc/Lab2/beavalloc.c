@@ -9,10 +9,14 @@
 
 #include "beavalloc.h"
 
+#ifndef NEW_BLOCK_SIZE
+    #define NEW_BLOCK_SIZE 1024
+#endif
+
 struct heap_list {
-    void* prev;
+    struct heap_list* prev; 
     void* data;
-    void* next;
+    struct heap_list* next;
     uint8_t free;
     uint16_t size;
     uint16_t capacity;
@@ -22,20 +26,159 @@ struct heap_list {
 // variables to store begin/end of the program memory
 void* lower_mem_bound = NULL;
 void* upper_mem_bound = NULL;
+struct heap_list* heap = NULL;
+// {
+//     NULL,
+//     NULL,
+//     NULL,
+//     TRUE,
+//     0,
+//     0
+// };
 
 void *beavalloc(size_t size) {
+    void* mem_start = NULL;
+    struct heap_list *curr = heap;
+    uint8_t found_mem_spot = 0; // Did we find space?
+    int new_size;
+
+    // if size is NULL or 0, return NULL
+    if (!size) {
+        return NULL;
+    }
+
+
+    // If we don't have a lower bound we haven't started the heap; start it
+    if (!heap) {
+        mem_start = sbrk(NEW_BLOCK_SIZE + sizeof(struct heap_list));
+        // Set heap to first pointer in linked list
+        heap = mem_start;
+        heap->data = mem_start + sizeof(struct heap_list);
+        heap->free = 1;
+        heap->capacity = NEW_BLOCK_SIZE;
+        heap->size = 0;
+        lower_mem_bound = mem_start;
+        upper_mem_bound = lower_mem_bound + NEW_BLOCK_SIZE + sizeof(struct heap_list);
+        curr = heap;
+    }
+
+    // Check to see if we have space for the amount of data we need; if we don't, make it
+    while (curr != NULL && !found_mem_spot) {
+        if (curr->capacity > size && curr->free) {
+            // Current block has space and is free, fill it up
+            curr->free = FALSE;
+            curr->size = size;
+
+            mem_start = curr->data;
+            found_mem_spot = TRUE;
+        }
+
+        curr = curr->next;
+    }
+
+    // Make a new block if we didn't find one
+    new_size = (((size) / NEW_BLOCK_SIZE) + 1) * NEW_BLOCK_SIZE;
+    if (!found_mem_spot) {
+        struct heap_list* temp = NULL;
+        // {
+        //     NULL,
+        //     NULL,
+        //     NULL,
+        //     FALSE,
+        //     size,
+        //     new_size
+        // };
+        struct heap_list* last;
+        // Need to allocate new memory for this
+        mem_start = sbrk(new_size + sizeof(struct heap_list));
+        temp = mem_start;
+        mem_start += sizeof(struct heap_list);
+        // Place it at the end of the heap
+        curr = heap;
+        while (curr) { last = curr; curr = curr->next; }
+        // Initialize our temp node
+        temp->prev = last;
+        temp->data = mem_start;
+        temp->next = NULL;
+        temp->free = FALSE;
+        temp->size = size;
+        temp->capacity = new_size;
+
+        last->next = temp;
+
+        upper_mem_bound = mem_start + new_size;
+
+    }
+
+    return mem_start;
+}
+
+void beavfree(void *ptr) {
+    struct heap_list* curr = heap;
+    uint8_t found_ptr = 0;
+    while (curr && !found_ptr) {
+        if (curr->data == ptr) {
+            found_ptr = 1;
+        } else {
+            curr = curr->next;
+        }
+    }
+
+    if (found_ptr && curr) {
+        curr->free = TRUE;
+    }
     
 }
 
-void beavfree(void *ptr);
+void beavalloc_reset(void) {
+    brk(lower_mem_bound);
+    upper_mem_bound = upper_mem_bound;
+    heap = NULL;
+}
 
-void beavalloc_reset(void);
+void beavalloc_set_verbose(uint8_t verbose) {}
 
-void beavalloc_set_verbose(uint8_t);
+void *beavcalloc(size_t nmemb, size_t size) {
+    void* result = beavalloc(nmemb * size);
+    memset(result, 0, nmemb*size);
 
-void *beavcalloc(size_t nmemb, size_t size);
+    return result;
+}
 
-void *beavrealloc(void *ptr, size_t size);
+void *beavrealloc(void *ptr, size_t size) {
+    void* result;
+    struct heap_list* curr = heap;
+    uint8_t found_ptr = 0;
+
+    if (!ptr) {
+        size *= 2;
+        result = beavalloc(size);
+        return result;
+    } 
+    // get the old location size
+    while (curr && !found_ptr) {
+        if (curr->data == ptr) {
+            found_ptr = 1;
+        } else {
+            curr = curr->next;
+        }
+    }
+
+    if (curr && found_ptr) {
+        if (curr->capacity < size){
+            result = beavalloc(size);
+            memmove(result, ptr, curr->size);
+            beavfree(ptr);
+        } else {
+            curr->size = size;
+            result = ptr;
+        }
+    } else if (!found_ptr) {
+        result = beavalloc(size);
+    }
+
+    return result;
+}
 
 void beavalloc_dump(uint8_t leaks_only)
 {
@@ -71,7 +214,7 @@ void beavalloc_dump(uint8_t leaks_only)
             , "blk size "
             , "status   "
         );
-    for (curr = heap_list, i = 0; curr != NULL; curr = curr->next, i++) {
+    for (curr = heap, i = 0; curr != NULL; curr = curr->next, i++) {
         if (leaks_only == FALSE || (leaks_only == TRUE && curr->free == FALSE)) {
             fprintf(stderr
                     , "  %u\t\t%9p\t%9p\t%9p\t%9p\t%u\t\t%u\t\t"

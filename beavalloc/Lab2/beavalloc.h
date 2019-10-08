@@ -51,7 +51,7 @@ void beavalloc_reset(void);
 
 // Set the verbosity of your beavalloc() code (and related functions).
 // This should modify a variable that is static to your C module.
-void beavalloc_set_verbose(uint8_t);
+void beavalloc_set_verbose(uint8_t verbose);
 
 void *beavcalloc(size_t nmemb, size_t size);
 void *beavrealloc(void *ptr, size_t size);
