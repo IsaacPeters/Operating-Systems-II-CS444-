@@ -190,7 +190,7 @@ UPROGS=\
 	_ps\
 	_stat\
 	_mv\
-	_cp\
+	_kdebug\
 	$(NULL)
 
 fs.img: mkfs README $(UPROGS)

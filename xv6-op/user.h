@@ -145,6 +145,7 @@ int getppid(void);
 #ifdef CPS
 int cps(int);
 #endif // CPS
+int kdebug(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

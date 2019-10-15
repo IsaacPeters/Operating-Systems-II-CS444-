@@ -20,6 +20,21 @@
 # define FALSE 0
 #endif // FALSE
 
+#ifndef NEW_BLOCK_SIZE
+    #define NEW_BLOCK_SIZE 1024
+#endif
+
+// Doubly linked list to keep track of memory allocation for the beavalloc program
+struct heap_list {
+    struct heap_list* prev; 
+    void* data;
+    struct heap_list* next;
+    uint8_t free;
+    uint16_t size;
+    uint16_t capacity;
+    
+};
+
 // The basic memory allocator.
 // If you pass NULL or 0, then NULL is returned.
 // If, for some reason, the system cannot allocate the requested

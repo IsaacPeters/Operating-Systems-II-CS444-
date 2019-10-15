@@ -90,6 +90,16 @@ sys_sleep(void)
   return 0;
 }
 
+int
+sys_kdebug(void) {
+  int tof = 0;
+
+  if (argint(0, &tof) < 0)
+    return -1;
+
+  debugState = tof;
+}
+
 // return how many clock tick interrupts have occurred
 // since start.
 int

@@ -35,3 +35,5 @@ SYSCALL(getppid)
 #ifdef CPS
 SYSCALL(cps)
 #endif // CPS
+
+SYSCALL(kdebug)
