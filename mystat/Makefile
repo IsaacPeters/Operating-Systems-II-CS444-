@@ -18,3 +18,6 @@ $(PROG).o: $(PROG).c
 
 clean:
 	rm -f *.o $(PROG) *~ \#*
+	
+tar: clean
+	tar cvfz $(PROG).tar.gz *.[ch] ?akefile
