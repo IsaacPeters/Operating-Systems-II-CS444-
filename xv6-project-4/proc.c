@@ -5,13 +5,12 @@
 #include "mmu.h"
 #include "x86.h"
 #include "proc.h"
+#ifndef __PROC_H
+  #include "date.h" // TODO do I need to do this?
+#endif
 #include "spinlock.h"
 
-#ifndef NULL
-# define NULL 0
-#endif // NULL
-
-uint debugState = 0;
+uint debugState = FALSE;
 
 struct {
   struct spinlock lock;
@@ -118,10 +117,17 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
-  p->sched_count = 0;
+  // Program 4 additions
+  // Inits variables to keep track of process time/ticks
 
-  // Project 4 Additions
-  // Adds process time and ticks tracking
+  //TODO why are these values messed up???
+  // sp -= sizeof p->begin_date;
+  // p->begin_date = (struct rtcdate)sp;
+  // memset(p.begin_date, 0, sizeof p->begin_date); // TODO figure out why I get an incomplete type error here
+  cmostime(&p->begin_date);
+  p->ticks_total = 0;
+  p->ticks_begin = 0;
+  p->sched_times = 0;
 
   return p;
 }
@@ -196,7 +202,7 @@ fork(void)
   struct proc *curproc = myproc();
 
   if (debugState)
-    cprintf("fork() called\n");
+      cprintf("fork() called\n");
 
   // Allocate process.
   if((np = allocproc()) == 0){
@@ -281,6 +287,19 @@ exit(void)
   panic("zombie exit");
 }
 
+// return how many clock tick interrupts have occurred
+// since start.
+int
+uptime(void)
+{
+  uint xticks;
+
+  acquire(&tickslock);
+  xticks = ticks;
+  release(&tickslock);
+  return xticks;
+}
+
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int
@@ -350,16 +369,22 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
+      // TODO add ifdef block?
+      p->sched_times++;
+      p->ticks_begin = uptime();
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      p->sched_count++;
 
+      // TODO figure out what this does
       swtch(&(c->scheduler), p->context);
       switchkvm();
+
+      p->ticks_total++;
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
@@ -529,9 +554,8 @@ sys_cps(void)
 
     acquire(&ptable.lock);
     cprintf(
-        "pid\tppid\tname\tstate\tsize"
+        "pid\tppid\tname\tstate\tsize\tstart_time\t\tticks\tsched"
         );
-    cprintf("\tsched");
     cprintf("\n");
     for (i = 0; i < NPROC; i++) {
         if (ptable.proc[i].state != UNUSED) {
@@ -542,13 +566,20 @@ sys_cps(void)
             else {
                 state = "uknown";
             }
-            cprintf("%d\t%d\t%s\t%s\t%u"
+            cprintf("%d\t%d\t%s\t%s\t%u\t%u %u %u %u:%u:%u\t%d\t%d"
                     , ptable.proc[i].pid
                     , ptable.proc[i].parent ? ptable.proc[i].parent->pid : 1
                     , ptable.proc[i].name, state
                     , ptable.proc[i].sz
+                    , ptable.proc[i].begin_date.year
+                    , ptable.proc[i].begin_date.month
+                    , ptable.proc[i].begin_date.day
+                    , ptable.proc[i].begin_date.hour
+                    , ptable.proc[i].begin_date.minute
+                    , ptable.proc[i].begin_date.second
+                    , ptable.proc[i].ticks_total
+                    , ptable.proc[i].sched_times
                 );
-            cprintf("\t%u", ptable.proc[i].sched_count);
             cprintf("\n");
         }
         else {

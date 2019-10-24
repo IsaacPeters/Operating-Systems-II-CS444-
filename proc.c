@@ -7,11 +7,7 @@
 #include "proc.h"
 #include "spinlock.h"
 
-#ifndef NULL
-# define NULL 0
-#endif // NULL
-
-uint debugState = 0;
+uint debugState = FALSE;
 
 struct {
   struct spinlock lock;
@@ -118,10 +114,13 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
-  p->sched_count = 0;
+  // Program 4 additions
+  // Inits variables to keep track of process time/ticks
 
-  // Project 4 Additions
-  // Adds process time and ticks tracking
+  cmostime(p->begin_date);
+  p->ticks_total = 0;
+  p->ticks_begin = 0;
+  p->ticks_times = 0;
 
   return p;
 }
@@ -196,7 +195,7 @@ fork(void)
   struct proc *curproc = myproc();
 
   if (debugState)
-    cprintf("fork() called\n");
+      cprintf("fork() called\n");
 
   // Allocate process.
   if((np = allocproc()) == 0){
@@ -356,7 +355,6 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      p->sched_count++;
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
@@ -531,7 +529,6 @@ sys_cps(void)
     cprintf(
         "pid\tppid\tname\tstate\tsize"
         );
-    cprintf("\tsched");
     cprintf("\n");
     for (i = 0; i < NPROC; i++) {
         if (ptable.proc[i].state != UNUSED) {
@@ -548,7 +545,6 @@ sys_cps(void)
                     , ptable.proc[i].name, state
                     , ptable.proc[i].sz
                 );
-            cprintf("\t%u", ptable.proc[i].sched_count);
             cprintf("\n");
         }
         else {

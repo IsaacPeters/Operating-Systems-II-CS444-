@@ -1,12 +1,13 @@
 #include "types.h"
 #include "x86.h"
 #include "defs.h"
-#include "date.h"
 #include "param.h"
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
-#include "proc.c"
+#ifndef __PROC_H
+  #include "date.h" // TODO do I need to do this?
+#endif
 
 int
 sys_fork(void)
@@ -109,7 +110,12 @@ sys_kdebug(void)
 int
 sys_uptime(void)
 {
-  return uptime();
+  uint xticks;
+
+  acquire(&tickslock);
+  xticks = ticks;
+  release(&tickslock);
+  return xticks;
 }
 
 int
