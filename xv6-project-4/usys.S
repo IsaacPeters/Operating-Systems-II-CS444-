@@ -35,6 +35,9 @@ SYSCALL(getppid)
 #ifdef CPS
 SYSCALL(cps)
 #endif // CPS
+#ifdef RANDOM
+SYSCALL(random)
+#endif // RANDOM
 
 SYSCALL(kdebug)
 SYSCALL(halt)

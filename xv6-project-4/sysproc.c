@@ -8,6 +8,9 @@
 #ifndef __PROC_H
   #include "date.h" // TODO do I need to do this?
 #endif
+#ifdef RANDOM
+  #include "rand.h"
+#endif // RANDOM
 
 int
 sys_fork(void)
@@ -26,7 +29,14 @@ sys_getppid(void)
     }
     return ppid;
 }
-#endif 
+#endif /// GETPPID
+
+#ifdef RANDOM
+int
+sys_random(void) {
+  return rand();
+}
+#endif // RANDOM
 
 int
 sys_exit(void)

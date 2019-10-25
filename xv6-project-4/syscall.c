@@ -109,6 +109,9 @@ extern int sys_getppid(void);
 #ifdef CPS
 extern int sys_cps(void);
 #endif // CPS
+#ifdef RANDOM
+extern int sys_random(void);
+#endif // RANDOM
 extern int sys_kdebug(void);
 extern int sys_halt(void);
 
@@ -140,6 +143,9 @@ static int (*syscalls[])(void) = {
 #ifdef CPS
 [SYS_cps]     sys_cps,
 #endif // CPS
+#ifdef RANDOM
+[SYS_random]   sys_random,
+#endif // RANDOM
 [SYS_kdebug] sys_kdebug,
 [SYS_halt] sys_halt,
 };

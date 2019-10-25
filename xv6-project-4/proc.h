@@ -16,6 +16,18 @@
 # define TRUE 1
 #endif
 
+#ifdef LOTTERY_SCHED
+#ifndef DEFAULT_NICE_VALUE
+#define DEFAULT_NICE_VALUE 20
+#endif
+#ifndef MAX_NICE_VALUE
+#define MAX_NICE_VALUE 40
+#endif
+#ifndef MIN_NICE_VALUE
+#define MIN_NICE_VALUE 1
+#endif
+#endif // LOTTERY_SCHED
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -72,6 +84,9 @@ struct proc {
   unsigned int ticks_total;    // Number ticks total
   unsigned int ticks_begin;    // Number ticks since beginning
   unsigned int sched_times;    // Number of times the process has been scheduled
+  #ifdef LOTTERY_SCHED
+  unsigned int nice_value;     // Nice value for scheduler
+  #endif // LOTTERY_SCHED
 };
 
 // Process memory is laid out contiguously, low addresses first:

@@ -145,6 +145,9 @@ int getppid(void);
 #ifdef CPS
 int cps(int);
 #endif // CPS
+#ifdef RANDOM
+int random(void);
+#endif
 int kdebug(int);
 int halt(void);
 

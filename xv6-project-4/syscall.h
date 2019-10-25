@@ -28,3 +28,6 @@
 #endif // CPS
 #define SYS_kdebug 24
 #define SYS_halt 25
+#ifdef RANDOM
+# define SYS_random 26
+#endif // RANDOM

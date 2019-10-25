@@ -8,6 +8,9 @@
 #ifndef __PROC_H
   #include "date.h" // TODO do I need to do this?
 #endif
+#ifdef RANDOM
+  #include "rand.h"
+#endif // RANDOM
 #include "spinlock.h"
 
 uint debugState = FALSE;
@@ -129,6 +132,10 @@ found:
   p->ticks_begin = 0;
   p->sched_times = 0;
 
+  #ifdef LOTTERY_SCHED
+  p->nice_value = DEFAULT_NICE_VALUE;
+  #endif
+
   return p;
 }
 
@@ -237,6 +244,10 @@ fork(void)
   np->state = RUNNABLE;
 
   release(&ptable.lock);
+
+  #ifdef LOTTERY_SCHED
+  np->nice_value = curproc->nice_value;
+  #endif
 
   return pid;
 }
@@ -357,12 +368,58 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  int sum;
+  int sum_break;
   c->proc = 0;
   
   for(;;){
     // Enable interrupts on this processor.
     sti();
+    acquire(&ptable.lock);
 
+#ifdef LOTTERY_SCHED
+    sum = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      sum += p->nice_value;
+    }
+    sum_break = (rand() % sum) + 1;
+    
+    // Loop over process table looking for process to run.
+    sum = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+      else 
+        sum += p->nice_value;
+
+      if (sum > sum_break) {
+        // TODO add ifdef block?
+        p->sched_times++;
+        p->ticks_begin = uptime();
+
+        // Switch to chosen process.  It is the process's job
+        // to release ptable.lock and then reacquire it
+        // before jumping back to us.
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+
+        // TODO figure out what this does
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+
+        p->ticks_total++;
+
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+
+        break;
+      }
+    }
+#endif // LOTTERY SCHED
+
+#ifndef LOTTERY_SCHED
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -390,6 +447,7 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       c->proc = 0;
     }
+#endif // ROUND ROBIN
     release(&ptable.lock);
 
   }
@@ -572,7 +630,7 @@ sys_cps(void)
                     , ptable.proc[i].name, state
                     , ptable.proc[i].sz
                     , ptable.proc[i].begin_date.year
-                    , ptable.proc[i].begin_date.month
+                    , ptable.proc[i].begin_date.month // TODO zero pad this
                     , ptable.proc[i].begin_date.day
                     , ptable.proc[i].begin_date.hour
                     , ptable.proc[i].begin_date.minute
@@ -591,6 +649,16 @@ sys_cps(void)
     return 0;
 }
 #endif // CPS
+
+// // TODO do we need this?
+// #ifdef RANDOM
+// int
+// sys_random(void) {
+//   cprintf("Random number is: %d", rand());
+
+//   return 0;
+// }
+// #endif // RANDOM
 
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
