@@ -112,6 +112,10 @@ extern int sys_cps(void);
 #ifdef RANDOM
 extern int sys_random(void);
 #endif // RANDOM
+#ifdef LOTTERY_SCHED
+extern int sys_nice(void);
+extern int sys_renice(void);
+#endif // LOTTERY_SCHED
 extern int sys_kdebug(void);
 extern int sys_halt(void);
 
@@ -146,6 +150,9 @@ static int (*syscalls[])(void) = {
 #ifdef RANDOM
 [SYS_random]   sys_random,
 #endif // RANDOM
+#ifdef LOTTERY_SCHED
+[SYS_renice]   sys_renice,
+#endif // LOTTERY_SCHED
 [SYS_kdebug] sys_kdebug,
 [SYS_halt] sys_halt,
 };

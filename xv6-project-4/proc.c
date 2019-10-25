@@ -139,6 +139,28 @@ found:
   return p;
 }
 
+// Function to update a nice value since we have access to ptable here
+#ifdef LOTTERY_SCHED
+int
+renice(int new_nice, int pid) {
+    struct proc *p;
+
+    // nice out of bounds? return 1
+    if (new_nice < MIN_NICE_VALUE || new_nice > MAX_NICE_VALUE){
+        return 1;
+    }
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if (p->pid == pid) {
+            p->nice_value = new_nice;
+            return 0;
+        }
+    }
+    // pid not found? return 2
+    return 2;
+}
+#endif
+
 //PAGEBREAK: 32
 // Set up first user process.
 void
@@ -368,8 +390,10 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  #ifdef LOTTERY_SCHED
   int sum;
   int sum_break;
+  #endif
   c->proc = 0;
   
   for(;;){
@@ -421,7 +445,6 @@ scheduler(void)
 
 #ifndef LOTTERY_SCHED
     // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
@@ -612,7 +635,7 @@ sys_cps(void)
 
     acquire(&ptable.lock);
     cprintf(
-        "pid\tppid\tname\tstate\tsize\tstart_time\t\tticks\tsched"
+        "pid\tppid\tname\tstate\tsize\tstart_time\t\tticks\tsched\tnice"
         );
     cprintf("\n");
     for (i = 0; i < NPROC; i++) {
@@ -624,7 +647,7 @@ sys_cps(void)
             else {
                 state = "uknown";
             }
-            cprintf("%d\t%d\t%s\t%s\t%u\t%u %u %u %u:%u:%u\t%d\t%d"
+            cprintf("%d\t%d\t%s\t%s\t%u\t%u %u %u %u:%u:%u\t%d\t%d\t%d"
                     , ptable.proc[i].pid
                     , ptable.proc[i].parent ? ptable.proc[i].parent->pid : 1
                     , ptable.proc[i].name, state
@@ -637,6 +660,7 @@ sys_cps(void)
                     , ptable.proc[i].begin_date.second
                     , ptable.proc[i].ticks_total
                     , ptable.proc[i].sched_times
+                    , ptable.proc[i].nice_value
                 );
             cprintf("\n");
         }

@@ -38,6 +38,20 @@ sys_random(void) {
 }
 #endif // RANDOM
 
+#ifdef LOTTERY_SCHED
+int
+sys_renice(void) {
+    int new_nice = -1, pid = -1;
+    
+    if(argint(0, &new_nice) < 0)
+      return -1;
+    if(argint(1, &pid) < 0)
+      return -1;
+
+    return renice(new_nice, pid);
+}
+#endif // RANDOM
+
 int
 sys_exit(void)
 {

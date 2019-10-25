@@ -38,6 +38,9 @@ SYSCALL(cps)
 #ifdef RANDOM
 SYSCALL(random)
 #endif // RANDOM
+#ifdef LOTTERY_SCHED
+SYSCALL(renice)
+#endif // LOTTERY_SCHED
 
 SYSCALL(kdebug)
 SYSCALL(halt)

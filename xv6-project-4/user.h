@@ -148,6 +148,9 @@ int cps(int);
 #ifdef RANDOM
 int random(void);
 #endif
+#ifdef LOTTERY_SCHED
+int renice(int, int);
+#endif
 int kdebug(int);
 int halt(void);
 

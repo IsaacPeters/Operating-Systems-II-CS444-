@@ -31,3 +31,7 @@
 #ifdef RANDOM
 # define SYS_random 26
 #endif // RANDOM
+#ifdef LOTTERY_SCHED
+# define SYS_renice 27
+# define SYS_nice 28
+#endif // LOTTERY_SCHED

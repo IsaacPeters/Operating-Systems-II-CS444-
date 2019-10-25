@@ -195,6 +195,10 @@ UPROGS=\
 	_cp\
 	_shutdown\
 	_random\
+	_nice\
+	_renice\
+	_mfork\
+	_mult\
 	$(NULL)
 
 fs.img: mkfs README $(UPROGS)

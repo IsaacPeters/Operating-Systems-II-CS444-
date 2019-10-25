@@ -5,7 +5,7 @@
 int
 main(int argc, char *argv[])
 {
-    printf(1, "Random number is: %d\n", random());
+    printf(1, "random number is: %d\n", random());
 
     exit();
 }
