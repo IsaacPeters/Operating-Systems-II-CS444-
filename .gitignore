@@ -7,6 +7,9 @@
 *.obj
 *.elf
 *.asm
+*.sym
+*.S
+*.img
 
 # Linker output
 *.ilk
@@ -36,6 +39,7 @@
 *.i*86
 *.x86_64
 *.hex
+_*
 
 # Debug files
 *.dSYM/
@@ -52,3 +56,12 @@ Module.symvers
 Mkfile.old
 dkms.conf
 xv6-project-4/cat.asm
+xv6-project-4/bootblock
+
+# Specific Files
+entryother
+initcode
+kernel
+mkfs
+
+
