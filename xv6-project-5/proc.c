@@ -318,7 +318,7 @@ int
 kthread_join(int tid)
 {
   struct proc *p;
-  int foundThread = 0;
+  int foundThread = -1;
   struct proc *curproc = myproc();
 
   if (debugState) {
@@ -378,7 +378,7 @@ kthread_join(int tid)
       p->state = UNUSED;
       // release(&ptable.lock);
     }
-    foundThread = 1;
+    foundThread = 0;
 
     if (debugState) {
       cprintf("%s %s %d: Thread is joined, setting as runnable\n"
@@ -401,6 +401,7 @@ kthread_join(int tid)
     cprintf("%s %s %d: Returning found thread %d\n"
             , __FILE__, __FUNCTION__, __LINE__);
   }
+
   return foundThread;
 }
 

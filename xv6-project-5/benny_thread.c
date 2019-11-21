@@ -34,7 +34,7 @@ benny_thread_create(benny_thread_t *vbt, void (*func)(void*), void *arg_ptr)
         tstack += (PGSIZE - ((uint) tstack) % PGSIZE);
     }
     bt->tid = kthread_create(func, arg_ptr, tstack);
-    printf(1, "\n%s %d: new thread %d\n", __FILE__, __LINE__, bt->tid);
+    // printf(1, "\n%s %d: new thread %d\n", __FILE__, __LINE__, bt->tid);
 
     if (bt->tid != 0) {
         *vbt = (benny_thread_t) bt;
